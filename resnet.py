@@ -1,7 +1,7 @@
 import chainer
 import chainer.links as L
 from chainer import functions as F
-from gen_models.resblocks import Block
+from resblocks import Block
 from source.miscs.random_samples import sample_categorical, sample_continuous
 
 
@@ -16,12 +16,13 @@ class ResNetGenerator(chainer.Chain):
         self.n_classes = n_classes
         with self.init_scope():
             self.l1 = L.Linear(dim_z, (bottom_width ** 2) * ch * 16, initialW=initializer)
-            self.block2 = Block(ch * 16, ch * 8, activation=activation, upsample=True, n_classes=n_classes)
-            self.block3 = Block(ch * 8, ch * 4, activation=activation, upsample=True, n_classes=n_classes)
-            self.block4 = Block(ch * 4, ch * 2, activation=activation, upsample=True, n_classes=n_classes)
-            self.block5 = Block(ch * 2, ch, activation=activation, upsample=True, n_classes=n_classes)
-            self.b6 = L.BatchNormalization(ch)
-            self.l6 = L.Convolution2D(ch, 3, ksize=3, stride=1, pad=1, initialW=initializer)
+            self.block2 = Block(ch * 16, ch * 16, activation=activation, upsample=True, n_classes=n_classes)
+            self.block3 = Block(ch * 16, ch * 8, activation=activation, upsample=True, n_classes=n_classes)
+            self.block4 = Block(ch * 8, ch * 4, activation=activation, upsample=True, n_classes=n_classes)
+            self.block5 = Block(ch * 4, ch * 2, activation=activation, upsample=True, n_classes=n_classes)
+            self.block6 = Block(ch * 2, ch, activation=activation, upsample=True, n_classes=n_classes)
+            self.b7 = L.BatchNormalization(ch)
+            self.l7 = L.Convolution2D(ch, 3, ksize=3, stride=1, pad=1, initialW=initializer)
 
     def __call__(self, batchsize=64, z=None, y=None, **kwargs):
         if z is None:
@@ -30,7 +31,7 @@ class ResNetGenerator(chainer.Chain):
             y = sample_categorical(self.n_classes, batchsize, distribution="uniform",
                                    xp=self.xp) if self.n_classes > 0 else None
         if (y is not None) and z.shape[0] != y.shape[0]:
-            raise Exception('z.shape[0] != y.shape[0], z.shape[0]={}, y.shape[0]={}'.format(z.shape[0], y.shape[0]))
+            raise ValueError('z.shape[0] != y.shape[0], z.shape[0]={}, y.shape[0]={}'.format(z.shape[0], y.shape[0]))
         h = z
         h = self.l1(h)
         h = F.reshape(h, (h.shape[0], -1, self.bottom_width, self.bottom_width))
@@ -38,7 +39,8 @@ class ResNetGenerator(chainer.Chain):
         h = self.block3(h, y, **kwargs)
         h = self.block4(h, y, **kwargs)
         h = self.block5(h, y, **kwargs)
-        h = self.b6(h)
+        h = self.block6(h, y, **kwargs)
+        h = self.b7(h)
         h = self.activation(h)
-        h = F.tanh(self.l6(h))
+        h = F.tanh(self.l7(h))
         return h

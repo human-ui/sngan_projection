@@ -88,8 +88,14 @@ class CategoricalConditionalBatchNormalization(ConditionalBatchNormalization):
             gamma_c = F.sum(_gamma_c, 1) 
             beta_c = F.sum(_beta_c, 1) 
         else:
-            gamma_c = self.gammas(c)
-            beta_c = self.betas(c)
+            if c.ndim == 1:  # just labels
+                gamma_c = self.gammas(c)
+                beta_c = self.betas(c)
+            else:  # distributions
+                wg = list(self.gammas.params())[0]
+                wb = list(self.betas.params())[0]
+                gamma_c = chainer.functions.matmul(c, wg)
+                beta_c = chainer.functions.matmul(c, wb)
         return super(CategoricalConditionalBatchNormalization, self).__call__(x, gamma_c, beta_c, **kwargs)
 
 
