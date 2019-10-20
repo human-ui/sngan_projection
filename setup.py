@@ -10,6 +10,7 @@ setup(
         'numpy',
         'tqdm',
         'pillow',
-        'pyyaml'
+        'pyyaml',
+        'requests'
     ]
 )
