@@ -2,7 +2,7 @@ import chainer
 import chainer.links as L
 from chainer import functions as F
 from resblocks import Block
-from source.miscs.random_samples import sample_categorical, sample_continuous
+from sngan_projection.miscs.random_samples import sample_categorical, sample_continuous
 
 
 class ResNetGenerator(chainer.Chain):

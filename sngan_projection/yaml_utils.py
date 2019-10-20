@@ -9,6 +9,7 @@ import time
 
 import yaml
 
+PATH = os.path.dirname(__file__)
 
 # Copy from tgans repo.
 class Config(object):
@@ -37,7 +38,7 @@ def load_dataset(config):
 def load_module(fn, name):
     mod_name = os.path.splitext(os.path.basename(fn))[0]
     mod_path = os.path.dirname(fn)
-    sys.path.insert(0, mod_path)
+    sys.path.insert(0, os.path.join(PATH, mod_path))
     return getattr(__import__(mod_name), name)
 
 
