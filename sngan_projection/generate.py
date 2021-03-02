@@ -1,7 +1,6 @@
-import os, sys, time, shutil, requests
+import os
 
 import numpy as np
-import tqdm
 import chainer
 import yaml
 from PIL import Image
@@ -15,41 +14,46 @@ PATH = os.path.dirname(__file__)
 
 class Generate(object):
 
-    def __init__(self,
-                 weights_path=os.path.join(PATH, '../resources/ResNetGenerator_850000.npz'),
-                 categories=None,
-                 seed=None):
+    def __init__(self, weights_path=None, seed=None):
         if seed is not None:
             os.environ['CHAINER_SEED'] = f'{seed}'
             np.random.seed(seed)
 
-        path = os.path.join(PATH, '../resources/sn_projection.yml')
-        config = yaml_utils.Config(yaml.load(open(path), Loader=yaml.FullLoader))
-        gen_conf = config.models['generator']
-        self.gen = yaml_utils.load_model(gen_conf['fn'], gen_conf['name'], gen_conf['args'])
-        
-        if not os.path.isfile(weights_path):
-            download_weights('1TDGXDM4s_xJdHCDzXt18aqODpbWKk8qe', weights_path)
-        chainer.serializers.load_npz(weights_path, self.gen)
+        self.gen = model(weights_path)
 
+    def __call__(self, categories=None, output_path=None):
         if categories is None:
-            path = os.path.join(PATH, '../resources/synset_words.txt')
-            with open(path) as f:
-                categories = [l.strip('\n').split() for l in f.readlines() if l[0] != '#']
-        self.categories = categories
+            categories = [np.random.choice(self.gen.n_classes)]
 
-    def __call__(self, output_path='im.png'):
         with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
-            sel = np.random.choice(self.categories, size=2, replace=False)
-            nums = [int(s[0]) for s in sel]
-            c_vec = [1 / len(nums) if i in nums else 0 for i in range(self.gen.n_classes)]
-            y = self.gen.xp.asarray([c_vec], dtype=self.gen.xp.float32)
+            c_vec = np.zeros(self.gen.n_classes)
+            c_vec[np.array(categories)] = 1 / len(categories)
+            y = self.gen.xp.asarray([c_vec.tolist()], dtype=self.gen.xp.float32)
             x = self.gen(1, y=y).data
-            im = np.asarray(np.clip(x * 127.5 + 127.5, 0, 255), dtype=np.uint8)[0]
-            im = im.transpose((1, 2, 0))
+
+        im = np.asarray(np.clip(x * 127.5 + 127.5, 0, 255), dtype=np.uint8)[0]
+        im = im.transpose((1, 2, 0))
+
+        if output_path is not None:
             im = Image.fromarray(im)
             im.save(output_path)
+        else:
+            return im
+
+
+def model(weights_path=None):
+    path = os.path.join(PATH, '../resources/sn_projection.yml')
+    config = yaml_utils.Config(yaml.load(open(path), Loader=yaml.FullLoader))
+    gen_conf = config.models['generator']
+    gen = yaml_utils.load_model(
+        gen_conf['fn'], gen_conf['name'], gen_conf['args'])
+
+    if not os.path.isfile(weights_path):
+        download_weights('1TDGXDM4s_xJdHCDzXt18aqODpbWKk8qe', weights_path)
+    chainer.serializers.load_npz(weights_path, gen)
+
+    return gen
 
 
 if __name__ == '__main__':
-    Generator()()
+    Generate()(output_path='im.png')

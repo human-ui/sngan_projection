@@ -1,4 +1,5 @@
-ResNetGenerator_850000.npz
 __pycache__
 *.pyc
 *.egg-info
+.envrc
+.vscode

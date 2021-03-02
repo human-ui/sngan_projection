@@ -11,6 +11,5 @@ setup(
         'tqdm',
         'pillow',
         'pyyaml',
-        'requests'
     ]
 )
