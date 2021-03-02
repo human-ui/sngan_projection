@@ -1,1 +1,1 @@
-from sngan_projection.generate import Generate
+from sngan_projection.generate import Generator

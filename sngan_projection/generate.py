@@ -48,7 +48,7 @@ def model(weights_path=None):
     gen = yaml_utils.load_model(
         gen_conf['fn'], gen_conf['name'], gen_conf['args'])
 
-    if not os.path.isfile(weights_path):
+    if weights_path is None:
         weights_path = './weights.npy'
         download_weights('1TDGXDM4s_xJdHCDzXt18aqODpbWKk8qe', weights_path)
     chainer.serializers.load_npz(weights_path, gen)
