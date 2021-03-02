@@ -12,7 +12,7 @@ from sngan_projection.miscs.downloader import download_weights
 PATH = os.path.dirname(__file__)
 
 
-class Generate(object):
+class Generator(object):
 
     def __init__(self, weights_path=None, seed=None):
         if seed is not None:
@@ -49,6 +49,7 @@ def model(weights_path=None):
         gen_conf['fn'], gen_conf['name'], gen_conf['args'])
 
     if not os.path.isfile(weights_path):
+        weights_path = './weights.npy'
         download_weights('1TDGXDM4s_xJdHCDzXt18aqODpbWKk8qe', weights_path)
     chainer.serializers.load_npz(weights_path, gen)
 
@@ -56,4 +57,4 @@ def model(weights_path=None):
 
 
 if __name__ == '__main__':
-    Generate()(output_path='im.png')
+    Generator()(output_path='im.png')
