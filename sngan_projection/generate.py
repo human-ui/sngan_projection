@@ -3,7 +3,7 @@ import os
 import numpy as np
 import chainer
 import yaml
-from PIL import Image
+import imageio
 
 from sngan_projection import yaml_utils
 from sngan_projection.miscs.downloader import download_weights
@@ -14,31 +14,35 @@ PATH = os.path.dirname(__file__)
 
 class Generator(object):
 
-    def __init__(self, weights_path=None, seed=None):
+    def __init__(self, weights_path=None, gpu=None, seed=None):
         if seed is not None:
             os.environ['CHAINER_SEED'] = f'{seed}'
             np.random.seed(seed)
 
         self.gen = model(weights_path)
+        self.use_gpu = gpu is not None
+        if self.use_gpu:
+            chainer.cuda.get_device_from_id(gpu).use()
+            self.gen.to_gpu(gpu)
 
-    def __call__(self, categories=None, output_path=None):
-        if categories is None:
-            categories = [np.random.choice(self.gen.n_classes)]
+    def __call__(self, y=None, output_path=None, **kwargs):
+        if y is None:
+            y = [np.random.choice(self.gen.n_classes)]
+
+        y = self.gen.xp.asarray(y, dtype=self.gen.xp.float32)
 
         with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
-            c_vec = np.zeros(self.gen.n_classes)
-            c_vec[np.array(categories)] = 1 / len(categories)
-            y = self.gen.xp.asarray([c_vec.tolist()], dtype=self.gen.xp.float32)
-            x = self.gen(1, y=y).data
+            x = self.gen(y=y, **kwargs).data
 
-        im = np.asarray(np.clip(x * 127.5 + 127.5, 0, 255), dtype=np.uint8)[0]
-        im = im.transpose((1, 2, 0))
+        if self.use_gpu:
+            x = chainer.cuda.to_cpu(x)
 
-        if output_path is not None:
-            im = Image.fromarray(im)
-            im.save(output_path)
-        else:
-            return im
+        ims = np.asarray(np.clip((x + 1) * 127.5, 0, 255), dtype=np.uint8)
+        ims = ims.transpose((0, 2, 3, 1))
+
+        if output_path is not None and len(ims) == 1:
+            imageio.save(output_path, ims[0])
+        return ims
 
 
 def model(weights_path=None):
