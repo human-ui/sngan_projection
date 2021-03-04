@@ -28,7 +28,7 @@ class Generator(ResNetGenerator):
 
     def __call__(self, batchsize=64, z=None, y=None, **kwargs):
         with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
-            x = self.gen(batchsize=batchsize, z=z, y=y, **kwargs).data
+            x = super().__call__(batchsize=batchsize, z=z, y=y, **kwargs).data
 
         if self.use_gpu:
             x = chainer.cuda.to_cpu(x)

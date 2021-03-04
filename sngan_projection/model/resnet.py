@@ -1,7 +1,7 @@
 import chainer
 import chainer.links as L
 from chainer import functions as F
-from resblocks import Block
+from sngan_projection.model.resblocks import Block
 from sngan_projection.miscs.random_samples import sample_categorical, sample_continuous
 
 
