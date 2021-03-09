@@ -9,7 +9,5 @@ setup(
         'cython',
         'numpy',
         'tqdm',
-        'pillow',
-        'pyyaml',
     ]
 )
