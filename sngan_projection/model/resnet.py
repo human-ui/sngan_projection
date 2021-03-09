@@ -1,9 +1,10 @@
-from source.links.sn_linear import SNLinear
-from source.links.sn_embed_id import SNEmbedID
 import chainer
 import chainer.links as L
 from chainer import functions as F
+
 from sngan_projection.model.resblocks import Block, DisBlock, OptimizedBlock
+from sngan_projection.links.sn_linear import SNLinear
+from sngan_projection.links.sn_embed_id import SNEmbedID
 from sngan_projection.miscs.random_samples import sample_categorical, sample_continuous
 
 

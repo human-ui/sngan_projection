@@ -69,7 +69,7 @@ class Block(chainer.Chain):
 class DisBlock(chainer.Chain):
     def __init__(self, in_channels, out_channels, hidden_channels=None, ksize=3, pad=1,
                  activation=F.relu, downsample=False):
-        super(Block, self).__init__()
+        super(DisBlock, self).__init__()
         initializer = chainer.initializers.GlorotUniform(math.sqrt(2))
         initializer_sc = chainer.initializers.GlorotUniform()
         self.activation = activation
