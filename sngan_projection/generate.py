@@ -38,7 +38,7 @@ class Discriminator(resnet.ResNetDiscriminator):
 
 class Generator(resnet.ResNetGenerator):
 
-    def __init__(self, weights_path='./', gpu=None, seed=None):
+    def __init__(self, weights_path='./', use_discriminator=False, gpu=None, seed=None):
         if seed is not None:
             os.environ['CHAINER_SEED'] = f'{seed}'
             np.random.seed(seed)
@@ -55,12 +55,15 @@ class Generator(resnet.ResNetGenerator):
             chainer.cuda.get_device_from_id(gpu).use()
             self.to_gpu(gpu)
 
-        self.dis = Discriminator(weights_path=weights_path, gpu=gpu, seed=seed)
+        self.use_discriminator = use_discriminator
+        if use_discriminator:
+            self.dis = Discriminator(weights_path=weights_path, gpu=gpu, seed=seed)
 
     def __call__(self, batchsize=64, z=None, y=None, **kwargs):
         with chainer.using_config('train', False), chainer.using_config('enable_backprop', False):
             x = super().__call__(batchsize=batchsize, z=z, y=y, **kwargs)
-            is_real = self.dis(x)
+            if self.use_discriminator:
+                is_real = self.dis(x)
 
         if self.use_gpu:
             x = chainer.cuda.to_cpu(x.data)
@@ -68,7 +71,10 @@ class Generator(resnet.ResNetGenerator):
         ims = np.asarray(np.clip((x + 1) * 127.5, 0, 255), dtype=np.uint8)
         ims = ims.transpose((0, 2, 3, 1))
 
-        return ims, is_real
+        if not self.use_discriminator:
+            return ims
+        else:
+            return ims, is_real
 
 
 if __name__ == '__main__':
