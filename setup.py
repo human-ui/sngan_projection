@@ -9,5 +9,6 @@ setup(
         'cython',
         'numpy',
         'tqdm',
+        'imageio'
     ]
 )
